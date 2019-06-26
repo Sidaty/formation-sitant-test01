@@ -5,10 +5,12 @@
  */
 package com.sitan.test01.components;
 
+import java.util.Date;
 import java.util.Optional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.scheduling.annotation.Scheduled;
 
 /**
  *
@@ -37,6 +39,12 @@ public class HelloConfig {
     @Bean
     public AuditorAware auditorAware() {
         return () -> Optional.of("test");
+    }
+
+    @Scheduled(cron = "${cron.email}")
+//    @Scheduled(fixedDelay = 2_000, initialDelay = 10_000)
+    public void testScheduler1() {
+        System.out.println("Schedule : " + new Date());
     }
 
 }

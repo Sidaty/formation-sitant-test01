@@ -24,4 +24,8 @@ public class HelloFr implements HelloWorld {
         return "Bonjour " + name;
     }
 
+    public void toto() {
+        getLangage();
+    }
+    
 }

@@ -6,13 +6,19 @@
 package com.sitan.test01.endpoints;
 
 import com.sitan.test01.repositories.ClientRepository;
+import com.sitan.test01.utils.MyException;
+import java.util.Date;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author sidaty
  */
+@Slf4j
 @RestController
 @RequestMapping("clients")
 public class ClientEndpoint {
@@ -32,12 +39,18 @@ public class ClientEndpoint {
     @Value("${requete.client.ca}")
     private String requete;
 
+    private final ClientService clientService;
     private final JdbcTemplate jdbcTemplate;
     private final ClientRepository clientRepository;
+    private final EmailService emailService;
 
-    public ClientEndpoint(JdbcTemplate jdbcTemplate, ClientRepository clientRepository) {
+    public ClientEndpoint(ClientService clientService, 
+            JdbcTemplate jdbcTemplate, ClientRepository clientRepository,
+            EmailService emailService) {
+        this.clientService = clientService;
         this.jdbcTemplate = jdbcTemplate;
         this.clientRepository = clientRepository;
+        this.emailService = emailService;
     }
 
     @GetMapping("with-ca")
@@ -55,8 +68,16 @@ public class ClientEndpoint {
     }
 
     @PostMapping
+    @Transactional(rollbackFor = {MyException.class})
     public ResponseEntity create(@RequestBody Client client) {
-        return ResponseEntity.ok(clientRepository.saveAndFlush(client));
+        client = clientRepository.save(client);
+//        if (true) {
+//            throw new MyException("Error");
+//        }
+
+//        emailService.send(requete, requete, requete);
+        return ResponseEntity.ok(client);
+
     }
 
     @GetMapping
@@ -90,7 +111,7 @@ public class ClientEndpoint {
                 .map(String::toUpperCase)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.ok("Toto"));
-        
+
 //        return clientRepository
 //                .findById(id)
 //                .map(client -> client.getNom())
@@ -98,4 +119,10 @@ public class ClientEndpoint {
 //                .orElse(ResponseEntity.ok("Toto"));
     }
 
+    @RequestMapping("tasks")
+    public String tasks() {
+        clientService.tasks();
+        return "OK";
+    }
+    
 }
